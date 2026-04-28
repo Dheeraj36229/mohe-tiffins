@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Mohe Tiffins — Admin Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --saffron: #E8572A; --turmeric: #F5A623; --leaf: #2D6A4F;
+      --bg: #0F0F0F; --surface: #1A1A1A; --surface2: #242424;
+      --border: rgba(255,255,255,0.08); --text: #F0EDE8; --muted: #888;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; }
+
+    /* SIDEBAR */
+    .sidebar {
+      width: 240px; background: var(--surface); border-right: 1px solid var(--border);
+      display: flex; flex-direction: column; padding: 2rem 1.5rem; min-height: 100vh; flex-shrink: 0;
+    }
+    .sidebar-logo { font-family: 'Playfair Display', serif; font-size: 1.4rem; color: var(--saffron); margin-bottom: 2.5rem; font-weight: 700; }
+    .sidebar-logo span { color: var(--text); }
+    .nav-item {
+      display: flex; align-items: center; gap: 10px; padding: 0.7rem 0.875rem;
+      border-radius: 10px; font-size: 0.9rem; color: var(--muted);
+      cursor: pointer; transition: all 0.2s; margin-bottom: 4px; border: none; background: none;
+      font-family: 'DM Sans', sans-serif; width: 100%; text-align: left;
+    }
+    .nav-item:hover { background: var(--surface2); color: var(--text); }
+    .nav-item.active { background: rgba(232,87,42,0.15); color: var(--saffron); }
+    .nav-icon { font-size: 1rem; width: 20px; }
+    .sidebar-divider { height: 1px; background: var(--border); margin: 1rem 0; }
+    .sidebar-section { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.75rem; padding: 0 0.875rem; }
+
+    /* MAIN */
+    .main { flex: 1; padding: 2rem; overflow-y: auto; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+    .page-title { font-family: 'Playfair Display', serif; font-size: 1.75rem; font-weight: 700; }
+    .topbar-right { display: flex; align-items: center; gap: 1rem; }
+    .date-badge { font-size: 0.8rem; color: var(--muted); background: var(--surface); border: 1px solid var(--border); padding: 0.4rem 0.875rem; border-radius: 100px; }
+    .add-btn { background: var(--saffron); color: #fff; border: none; border-radius: 100px; padding: 0.5rem 1.2rem; font-size: 0.85rem; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+
+    /* METRIC CARDS */
+    .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 2rem; }
+    .metric {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+      padding: 1.5rem; position: relative; overflow: hidden;
+    }
+    .metric::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--accent); }
+    .metric.s { --accent: var(--saffron); }
+    .metric.t { --accent: var(--turmeric); }
+    .metric.l { --accent: var(--leaf); }
+    .metric.b { --accent: #5B8DEF; }
+    .metric-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.75rem; }
+    .metric-val { font-family: 'Playfair Display', serif; font-size: 2rem; font-weight: 700; }
+    .metric-sub { font-size: 0.78rem; color: var(--muted); margin-top: 4px; }
+    .metric-badge { position: absolute; top: 1rem; right: 1rem; font-size: 0.7rem; background: rgba(255,255,255,0.06); padding: 3px 8px; border-radius: 100px; }
+
+    /* GRID LAYOUT */
+    .grid-2 { display: grid; grid-template-columns: 1.5fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
+
+    /* CARD */
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 1.5rem; }
+    .card-title { font-size: 0.9rem; font-weight: 600; margin-bottom: 1.25rem; display: flex; justify-content: space-between; align-items: center; }
+    .card-action { font-size: 0.75rem; color: var(--saffron); cursor: pointer; }
+
+    /* ORDERS TABLE */
+    .orders-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+    .orders-table th { text-align: left; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); padding: 0 0.75rem 0.875rem; font-weight: 500; }
+    .orders-table td { padding: 0.875rem 0.75rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    .orders-table tr:last-child td { border-bottom: none; }
+    .orders-table tr:hover td { background: var(--surface2); }
+    .status { display: inline-flex; align-items: center; gap: 5px; font-size: 0.75rem; padding: 3px 10px; border-radius: 100px; font-weight: 500; }
+    .status.confirmed { background: rgba(45,106,79,0.15); color: #4ade80; }
+    .status.pending { background: rgba(245,166,35,0.15); color: var(--turmeric); }
+    .status.delivered { background: rgba(91,141,239,0.15); color: #5B8DEF; }
+    .status-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+    /* PLAN BREAKDOWN */
+    .plan-list { display: flex; flex-direction: column; gap: 12px; }
+    .plan-row { display: flex; align-items: center; justify-content: space-between; }
+    .plan-name { font-size: 0.875rem; }
+    .plan-bar-wrap { flex: 1; margin: 0 1rem; height: 6px; background: var(--surface2); border-radius: 100px; overflow: hidden; }
+    .plan-bar { height: 100%; border-radius: 100px; background: var(--saffron); transition: width 1s ease; }
+    .plan-count { font-size: 0.875rem; font-weight: 600; min-width: 40px; text-align: right; }
+
+    /* MENU EDITOR */
+    .menu-editor { display: flex; flex-direction: column; gap: 8px; }
+    .menu-row {
+      display: grid; grid-template-columns: 80px 1fr auto;
+      align-items: center; gap: 10px; padding: 10px 12px;
+      background: var(--surface2); border-radius: 10px;
+    }
+    .menu-day-tag { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+    .menu-input {
+      background: none; border: none; color: var(--text);
+      font-family: 'DM Sans', sans-serif; font-size: 0.875rem; outline: none; width: 100%;
+    }
+    .menu-input:focus { color: var(--saffron); }
+    .menu-save { font-size: 0.7rem; color: var(--saffron); cursor: pointer; background: none; border: none; font-family: 'DM Sans', sans-serif; }
+
+    /* NOTIFICATION AREA */
+    .notif-list { display: flex; flex-direction: column; gap: 8px; }
+    .notif {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 10px; background: var(--surface2); border-radius: 10px;
+    }
+    .notif-icon { font-size: 1rem; flex-shrink: 0; }
+    .notif-text { font-size: 0.82rem; color: var(--text); line-height: 1.4; }
+    .notif-time { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+
+    /* TABS */
+    .panel { display: none; }
+    .panel.active { display: block; }
+  </style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-logo">Mohe<span>Tiffins</span></div>
+  <div class="sidebar-section">Main</div>
+  <button class="nav-item active" onclick="showPanel('dashboard', this)"><span class="nav-icon">📊</span> Dashboard</button>
+  <button class="nav-item" onclick="showPanel('orders', this)"><span class="nav-icon">🍱</span> Orders</button>
+  <button class="nav-item" onclick="showPanel('menu', this)"><span class="nav-icon">📋</span> Weekly Menu</button>
+  <button class="nav-item" onclick="showPanel('customers', this)"><span class="nav-icon">👥</span> Customers</button>
+  <div class="sidebar-divider"></div>
+  <div class="sidebar-section">Settings</div>
+  <button class="nav-item" onclick="showPanel('timings', this)"><span class="nav-icon">⏰</span> Timings</button>
+  <button class="nav-item" onclick="showPanel('notify', this)"><span class="nav-icon">💬</span> Notifications</button>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <div class="page-title" id="page-title">Good morning 🌅</div>
+    <div class="topbar-right">
+      <div class="date-badge" id="today-date"></div>
+      <button class="add-btn" onclick="exportOrders()">Export Orders</button>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="panel-dashboard" class="panel active">
+    <div class="metrics">
+      <div class="metric s"><div class="metric-label">Today's Orders</div><div class="metric-val" id="m-orders">24</div><div class="metric-sub">↑ 4 from yesterday</div><div class="metric-badge">🍱</div></div>
+      <div class="metric t"><div class="metric-label">Today's Revenue</div><div class="metric-val" id="m-rev">₹2,880</div><div class="metric-sub">Lunch + Dinner</div><div class="metric-badge">💰</div></div>
+      <div class="metric l"><div class="metric-label">Monthly Subs</div><div class="metric-val" id="m-subs">18</div><div class="metric-sub">Active subscribers</div><div class="metric-badge">📅</div></div>
+      <div class="metric b"><div class="metric-label">Pending Delivery</div><div class="metric-val" id="m-pend">7</div><div class="metric-sub">Going out at 12PM</div><div class="metric-badge">🛵</div></div>
+    </div>
+
+    <div class="grid-2">
+      <!-- Recent orders -->
+      <div class="card">
+        <div class="card-title">Today's Orders <span class="card-action" onclick="showPanel('orders', document.querySelector('[onclick*=orders]'))">View all →</span></div>
+        <table class="orders-table">
+          <thead><tr><th>Name</th><th>Plan</th><th>Meal</th><th>Status</th></tr></thead>
+          <tbody id="orders-tbody"></tbody>
+        </table>
+      </div>
+      <!-- Plan breakdown -->
+      <div class="card">
+        <div class="card-title">Plan Breakdown</div>
+        <div class="plan-list" id="plan-breakdown"></div>
+        <div style="margin-top:1.5rem;padding-top:1rem;border-top:1px solid var(--border);font-size:0.8rem;color:var(--muted)">Based on today's 24 orders</div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <!-- Notifications -->
+      <div class="card">
+        <div class="card-title">Recent Activity</div>
+        <div class="notif-list" id="notif-list"></div>
+      </div>
+      <!-- Quick actions -->
+      <div class="card">
+        <div class="card-title">Quick Actions</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <button onclick="sendWhatsApp()" style="padding:0.875rem;background:rgba(37,211,102,0.1);border:1px solid rgba(37,211,102,0.2);color:#25D366;border-radius:12px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:0.875rem;text-align:left">💬 Broadcast Today's Menu on WhatsApp</button>
+          <button onclick="markAllDelivered()" style="padding:0.875rem;background:rgba(91,141,239,0.1);border:1px solid rgba(91,141,239,0.2);color:#5B8DEF;border-radius:12px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:0.875rem;text-align:left">✅ Mark Lunch Orders as Delivered</button>
+          <button onclick="addOrder()" style="padding:0.875rem;background:rgba(232,87,42,0.1);border:1px solid rgba(232,87,42,0.2);color:var(--saffron);border-radius:12px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:0.875rem;text-align:left">➕ Add Manual Order</button>
+          <button onclick="showPanel('menu', document.querySelector('[onclick*=menu]'))" style="padding:0.875rem;background:rgba(45,106,79,0.1);border:1px solid rgba(45,106,79,0.2);color:#4ade80;border-radius:12px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:0.875rem;text-align:left">📋 Edit This Week's Menu</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ORDERS PANEL -->
+  <div id="panel-orders" class="panel">
+    <div class="card">
+      <div class="card-title">All Orders — Today</div>
+      <table class="orders-table">
+        <thead><tr><th>#</th><th>Name</th><th>Phone</th><th>Plan</th><th>Meal</th><th>Address</th><th>Status</th><th>Action</th></tr></thead>
+        <tbody id="all-orders-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- MENU PANEL -->
+  <div id="panel-menu" class="panel">
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">☀️ Lunch Menu (This Week)</div>
+        <div class="menu-editor" id="lunch-editor"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">🌙 Dinner Menu (This Week)</div>
+        <div class="menu-editor" id="dinner-editor"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CUSTOMERS PANEL -->
+  <div id="panel-customers" class="panel">
+    <div class="card">
+      <div class="card-title">Monthly Subscribers</div>
+      <table class="orders-table">
+        <thead><tr><th>Name</th><th>Phone</th><th>Plan</th><th>Payment</th><th>Joined</th></tr></thead>
+        <tbody id="customers-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- TIMINGS PANEL -->
+  <div id="panel-timings" class="panel">
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Order & Delivery Windows</div>
+        <div style="display:flex;flex-direction:column;gap:1rem">
+          <div><div style="font-size:0.8rem;color:var(--muted);margin-bottom:6px">Lunch order window</div><div style="display:flex;gap:8px"><input type="time" value="09:00" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:0.5rem;border-radius:8px;font-family:'DM Sans',sans-serif"/> <span style="align-self:center;color:var(--muted)">to</span> <input type="time" value="11:00" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:0.5rem;border-radius:8px;font-family:'DM Sans',sans-serif"/></div></div>
+          <div><div style="font-size:0.8rem;color:var(--muted);margin-bottom:6px">Lunch delivery window</div><div style="display:flex;gap:8px"><input type="time" value="12:00" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:0.5rem;border-radius:8px;font-family:'DM Sans',sans-serif"/> <span style="align-self:center;color:var(--muted)">to</span> <input type="time" value="14:00" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:0.5rem;border-radius:8px;font-family:'DM Sans',sans-serif"/></div></div>
+          <div><div style="font-size:0.8rem;color:var(--muted);margin-bottom:6px">Dinner order window</div><div style="display:flex;gap:8px"><input type="time" value="15:00" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:0.5rem;border-radius:8px;font-family:'DM Sans',sans-serif"/> <span style="align-self:center;color:var(--muted)">to</span> <input type="time" value="17:00" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:0.5rem;border-radius:8px;font-family:'DM Sans',sans-serif"/></div></div>
+          <div><div style="font-size:0.8rem;color:var(--muted);margin-bottom:6px">Dinner delivery window</div><div style="display:flex;gap:8px"><input type="time" value="19:30" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:0.5rem;border-radius:8px;font-family:'DM Sans',sans-serif"/> <span style="align-self:center;color:var(--muted)">to</span> <input type="time" value="21:30" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:0.5rem;border-radius:8px;font-family:'DM Sans',sans-serif"/></div></div>
+          <button class="add-btn" style="align-self:flex-start;padding:0.6rem 1.5rem">Save Timings</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Discount Settings</div>
+        <div style="display:flex;flex-direction:column;gap:1rem">
+          <div><div style="font-size:0.8rem;color:var(--muted);margin-bottom:6px">Monthly prepay discount (%)</div><input type="number" value="15" min="0" max="50" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:0.6rem 0.875rem;border-radius:8px;font-family:'DM Sans',sans-serif;width:100%"/></div>
+          <div><div style="font-size:0.8rem;color:var(--muted);margin-bottom:6px">Daily advance discount (%)</div><input type="number" value="10" min="0" max="50" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:0.6rem 0.875rem;border-radius:8px;font-family:'DM Sans',sans-serif;width:100%"/></div>
+          <button class="add-btn" style="align-self:flex-start;padding:0.6rem 1.5rem">Save Discounts</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- NOTIFY PANEL -->
+  <div id="panel-notify" class="panel">
+    <div class="card">
+      <div class="card-title">Broadcast Message to All Customers</div>
+      <textarea id="broadcast-msg" style="width:100%;min-height:120px;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:1rem;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:0.9rem;resize:vertical;margin-bottom:1rem" placeholder="Type your message here... e.g. Today's lunch is Rajmah! Order by 11AM ☎"></textarea>
+      <button onclick="broadcastWA()" style="background:#25D366;color:#fff;border:none;border-radius:100px;padding:0.7rem 1.5rem;font-family:'DM Sans',sans-serif;font-size:0.875rem;font-weight:600;cursor:pointer">💬 Send on WhatsApp</button>
+    </div>
+  </div>
+</main>
+
+<script>
+// Sample data
+const orders = [
+  { id:1, name:'Rahul Sharma', phone:'9876543210', plan:'Economy', meal:'Lunch', address:'Room 12, Hostel A', status:'confirmed' },
+  { id:2, name:'Priya Singh', phone:'9876543211', plan:'Gold', meal:'Both', address:'Room 45, Hostel B', status:'pending' },
+  { id:3, name:'Amit Kumar', phone:'9876543212', plan:'Mini', meal:'Dinner', address:'Office Block C', status:'delivered' },
+  { id:4, name:'Neha Gupta', phone:'9876543213', plan:'Economy', meal:'Lunch', address:'Room 8, Hostel D', status:'confirmed' },
+  { id:5, name:'Vikram Patel', phone:'9876543214', plan:'Mini', meal:'Lunch', address:'Room 23, Hostel A', status:'confirmed' },
+  { id:6, name:'Sunita Devi', phone:'9876543215', plan:'Economy', meal:'Both', address:'Faculty quarters', status:'pending' },
+];
+const lunchMenu = [
+  {day:'Mon',dish:'White Chane'},{day:'Tue',dish:'Sabut Masar Daal'},{day:'Wed',dish:'Rajmah'},
+  {day:'Thu',dish:'Kadhi'},{day:'Fri',dish:'Black Daal'},{day:'Sat',dish:'Black Chane'}
+];
+const dinnerMenu = [
+  {day:'Mon',dish:'Aloo Nutri'},{day:'Tue',dish:'Palak Paneer'},{day:'Wed',dish:'Mix Daal'},
+  {day:'Thu',dish:'Orange Masar Dal'},{day:'Fri',dish:'Sabut Moong Daal'},{day:'Sun',dish:'Chane Daal'}
+];
+const customers = [
+  {name:'Rahul Sharma',phone:'9876543210',plan:'Economy',payment:'Paid ₹3,000',joined:'Apr 1'},
+  {name:'Priya Singh',phone:'9876543211',plan:'Gold',payment:'Paid ₹5,400',joined:'Apr 1'},
+  {name:'Neha Gupta',phone:'9876543213',plan:'Economy',payment:'Paid ₹3,000',joined:'Apr 5'},
+];
+
+// Render today's date
+const now = new Date();
+document.getElementById('today-date').textContent = now.toLocaleDateString('en-IN', {weekday:'long', day:'numeric', month:'long'});
+const h = now.getHours();
+document.getElementById('page-title').textContent = (h < 12 ? 'Good morning 🌅' : h < 17 ? 'Good afternoon ☀️' : 'Good evening 🌙');
+
+// Render orders table (dashboard)
+const tb = document.getElementById('orders-tbody');
+orders.slice(0,5).forEach(o => {
+  tb.innerHTML += `<tr><td>${o.name}</td><td>${o.plan}</td><td>${o.meal}</td><td><span class="status ${o.status}"><span class="status-dot"></span>${o.status}</span></td></tr>`;
+});
+
+// All orders
+const atb = document.getElementById('all-orders-tbody');
+orders.forEach(o => {
+  atb.innerHTML += `<tr>
+    <td style="color:var(--muted)">#${o.id}</td>
+    <td>${o.name}</td>
+    <td style="color:var(--muted)">${o.phone}</td>
+    <td>${o.plan}</td>
+    <td>${o.meal}</td>
+    <td style="color:var(--muted);font-size:0.8rem">${o.address}</td>
+    <td><span class="status ${o.status}"><span class="status-dot"></span>${o.status}</span></td>
+    <td><button onclick="changeStatus(${o.id})" style="font-size:0.75rem;padding:4px 10px;border-radius:100px;border:1px solid var(--border);background:none;color:var(--saffron);cursor:pointer;font-family:'DM Sans',sans-serif">Update</button></td>
+  </tr>`;
+});
+
+// Plan breakdown
+const plans = {Mini:0,Economy:0,Gold:0};
+orders.forEach(o => plans[o.plan]++);
+const pb = document.getElementById('plan-breakdown');
+const total = orders.length;
+[['Mini','₹80',plans.Mini],['Economy','₹120',plans.Economy],['Gold','₹180',plans.Gold]].forEach(([n,p,c]) => {
+  pb.innerHTML += `<div class="plan-row"><span class="plan-name">${n} <span style="color:var(--muted);font-size:0.78rem">${p}</span></span><div class="plan-bar-wrap"><div class="plan-bar" style="width:${(c/total*100).toFixed(0)}%"></div></div><span class="plan-count">${c}</span></div>`;
+});
+
+// Notifications
+const notifs = [
+  {icon:'🍱',text:'New order from Priya Singh — Gold Tiffin, Both meals',time:'2 mins ago'},
+  {icon:'✅',text:'Vikram Patel marked order as received',time:'15 mins ago'},
+  {icon:'💳',text:'Monthly payment received from Neha Gupta — ₹3,000',time:'1 hour ago'},
+  {icon:'📋',text:"Rahul Sharma changed order from Lunch to Both meals",time:'2 hours ago'},
+];
+const nl = document.getElementById('notif-list');
+notifs.forEach(n => { nl.innerHTML += `<div class="notif"><div class="notif-icon">${n.icon}</div><div><div class="notif-text">${n.text}</div><div class="notif-time">${n.time}</div></div></div>`; });
+
+// Menus
+const le = document.getElementById('lunch-editor');
+lunchMenu.forEach(m => {
+  le.innerHTML += `<div class="menu-row"><span class="menu-day-tag">${m.day}</span><input class="menu-input" value="${m.dish}" placeholder="Today's dish"/><button class="menu-save" onclick="saveMenu(this)">Save</button></div>`;
+});
+const de = document.getElementById('dinner-editor');
+dinnerMenu.forEach(m => {
+  de.innerHTML += `<div class="menu-row"><span class="menu-day-tag">${m.day}</span><input class="menu-input" value="${m.dish}" placeholder="Today's dish"/><button class="menu-save" onclick="saveMenu(this)">Save</button></div>`;
+});
+
+// Customers
+const ctb = document.getElementById('customers-tbody');
+customers.forEach(c => {
+  ctb.innerHTML += `<tr><td>${c.name}</td><td style="color:var(--muted)">${c.phone}</td><td>${c.plan}</td><td style="color:#4ade80">${c.payment}</td><td style="color:var(--muted)">${c.joined}</td></tr>`;
+});
+
+// Panel navigation
+function showPanel(id, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
+  if(btn) btn.classList.add('active');
+  const titles = {dashboard:'Dashboard',orders:'All Orders',menu:'Weekly Menu',customers:'Customers',timings:'Timings',notify:'Notifications'};
+  document.getElementById('page-title').textContent = titles[id] || 'Dashboard';
+}
+
+function saveMenu(btn) {
+  btn.textContent = '✓ Saved';
+  setTimeout(() => btn.textContent = 'Save', 1500);
+}
+function sendWhatsApp() { alert('📢 Menu broadcast sent to all subscribers via WhatsApp!'); }
+function markAllDelivered() {
+  document.querySelectorAll('.status').forEach(s => { if(s.classList.contains('confirmed')) { s.className = 'status delivered'; s.innerHTML = '<span class="status-dot"></span>delivered'; } });
+  alert('✅ All confirmed lunch orders marked as delivered!');
+}
+function addOrder() { alert('➕ Manual order entry — connect to your backend to add orders here.'); }
+function exportOrders() {
+  const rows = [['Name','Phone','Plan','Meal','Address','Status']];
+  orders.forEach(o => rows.push([o.name,o.phone,o.plan,o.meal,o.address,o.status]));
+  const csv = rows.map(r => r.join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = 'mohetiffins-orders.csv';
+  a.click();
+}
+function changeStatus(id) {
+  const statuses = ['pending','confirmed','delivered'];
+  alert(`Status updated for order #${id}`);
+}
+function broadcastWA() {
+  const msg = document.getElementById('broadcast-msg').value;
+  if(!msg.trim()) return alert('Please type a message first!');
+  window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
+}
+</script>
+</body>
+</html>
